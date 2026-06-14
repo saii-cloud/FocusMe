@@ -551,6 +551,103 @@
     nav { padding: 14px 16px; }
     .nav-tabs { display: none; }
   }
+
+  /* ======================== AUTH MODAL ======================== */
+  .auth-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(10,15,30,0.97);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .auth-overlay.hidden { display: none; }
+
+  .auth-card {
+    width: 100%; max-width: 420px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 36px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+    position: relative;
+  }
+  .auth-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.8rem;
+    color: var(--text); text-align: center;
+    margin-bottom: 4px;
+  }
+  .auth-logo span { color: var(--accent); }
+  .auth-tagline {
+    text-align: center; font-size: 0.85rem;
+    color: var(--text2); margin-bottom: 32px;
+  }
+
+  .auth-tabs {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border-radius: 12px; padding: 4px;
+    margin-bottom: 28px;
+  }
+  .auth-tab {
+    flex: 1; padding: 10px; border-radius: 9px; border: none;
+    background: transparent; color: var(--text2);
+    font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .auth-tab.active {
+    background: var(--surface2); color: var(--accent);
+  }
+
+  .auth-form { display: flex; flex-direction: column; gap: 14px; }
+  .auth-input {
+    width: 100%; padding: 14px 16px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .auth-input::placeholder { color: var(--text3); }
+  .auth-input:focus { border-color: var(--accent); }
+
+  .auth-btn {
+    width: 100%; padding: 15px; border-radius: 12px;
+    background: var(--accent); color: var(--bg);
+    border: none; font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 1rem;
+    cursor: pointer; transition: all 0.2s;
+    margin-top: 4px;
+  }
+  .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px var(--accent-glow); }
+
+  .auth-error {
+    color: var(--red); font-size: 0.82rem;
+    text-align: center; min-height: 20px;
+    margin-top: -6px;
+  }
+
+  .auth-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 4px 0;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .auth-divider span { font-size: 0.78rem; color: var(--text3); }
+
+  /* user chip in nav */
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 0.8rem; color: var(--text2); cursor: pointer;
+    transition: all 0.2s;
+  }
+  .user-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .user-avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent-dim); border: 1px solid var(--accent-glow);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; color: var(--accent);
+  }
 </style>
 </head>
 <body>
@@ -566,8 +663,13 @@
     <button class="nav-tab" onclick="showPage('settings')">⚙️ Settings</button>
   </div>
   <div class="nav-right">
-    <div class="streak-badge">🔥 <span id="streak-count">5</span> day streak</div>
+    <div class="streak-badge">🔥 <span id="streak-count">0</span> day streak</div>
     <div class="xp-badge">⚡ <span id="xp-count">1240</span> XP</div>
+    <div class="user-chip" id="user-chip" onclick="doLogout()" style="display:none">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <span id="user-name-label">User</span>
+      <span style="color:var(--text3);font-size:0.75rem">· Log out</span>
+    </div>
   </div>
 </nav>
 
@@ -840,10 +942,183 @@
   </div>
 </div>
 
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">Fine<span>Focus</span></div>
+    <div class="auth-tagline">Study smarter. Build your streak.</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Log In</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="form-login" class="auth-form">
+      <input class="auth-input" id="login-email" type="email" placeholder="Email address" autocomplete="email"/>
+      <input class="auth-input" id="login-pass" type="password" placeholder="Password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div class="auth-error" id="login-error"></div>
+      <button class="auth-btn" onclick="doLogin()">Log In</button>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="form-signup" class="auth-form" style="display:none">
+      <input class="auth-input" id="signup-name" type="text" placeholder="Your name" autocomplete="name"/>
+      <input class="auth-input" id="signup-email" type="email" placeholder="Email address" autocomplete="email"/>
+      <input class="auth-input" id="signup-pass" type="password" placeholder="Password (min 6 chars)" autocomplete="new-password"
+             onkeydown="if(event.key==='Enter')doSignup()"/>
+      <div class="auth-error" id="signup-error"></div>
+      <button class="auth-btn" onclick="doSignup()">Create Account</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
+// =================== AUTH & STREAK ===================
+// Storage keys
+const KEY_USERS    = 'ff_users';       // { email: { name, passHash, streak, lastLogin } }
+const KEY_SESSION  = 'ff_session';     // email of logged-in user
+
+function hashPass(p) {
+  // Simple deterministic hash (not cryptographic – fine for demo)
+  let h = 0;
+  for (let i = 0; i < p.length; i++) { h = (Math.imul(31, h) + p.charCodeAt(i)) | 0; }
+  return h.toString(36);
+}
+
+function getUsers() { return JSON.parse(localStorage.getItem(KEY_USERS) || '{}'); }
+function saveUsers(u) { localStorage.setItem(KEY_USERS, JSON.stringify(u)); }
+function getSession() { return localStorage.getItem(KEY_SESSION); }
+function setSession(email) { localStorage.setItem(KEY_SESSION, email); }
+function clearSession() { localStorage.removeItem(KEY_SESSION); }
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function yesterdayStr() {
+  const d = new Date(); d.setDate(d.getDate()-1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// XP earned on a given streak day = 67 * day number
+// Day 1 = 67, Day 2 = 134, Day 3 = 201, etc.
+function xpForDay(day) { return 67 * day; }
+
+function calcStreak(user) {
+  const today = todayStr();
+  const yesterday = yesterdayStr();
+  if (!user.lastLogin) {
+    // First ever login – handled in signup, safety fallback
+    user.streak = 1;
+    user.xp = (user.xp || 0) + xpForDay(1);
+    user.lastLogin = today;
+  } else if (user.lastLogin === today) {
+    // Already logged in today – nothing changes
+  } else if (user.lastLogin === yesterday) {
+    // Consecutive day – increment streak and award XP for new day
+    user.streak = (user.streak || 1) + 1;
+    user.xp = (user.xp || 0) + xpForDay(user.streak);
+    user.lastLogin = today;
+  } else {
+    // Missed one or more days – reset streak to 1, keep XP, award day-1 XP
+    user.streak = 1;
+    user.xp = (user.xp || 0) + xpForDay(1);
+    user.lastLogin = today;
+  }
+  return user;
+}
+
+function applySession(email) {
+  const users = getUsers();
+  const user = users[email];
+  if (!user) return;
+  // Show user chip
+  document.getElementById('user-chip').style.display = 'flex';
+  document.getElementById('user-name-label').textContent = user.name || email.split('@')[0];
+  document.getElementById('user-avatar').textContent = (user.name || email)[0].toUpperCase();
+  // Update streak badge and XP
+  document.getElementById('streak-count').textContent = user.streak || 1;
+  document.getElementById('xp-count').textContent = user.xp || 67;
+  // Hide modal
+  document.getElementById('auth-overlay').classList.add('hidden');
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('login-pass').value;
+  const err   = document.getElementById('login-error');
+  err.textContent = '';
+  if (!email || !pass) { err.textContent = 'Please fill in all fields.'; return; }
+  const users = getUsers();
+  if (!users[email]) { err.textContent = 'No account found. Please sign up.'; return; }
+  if (users[email].passHash !== hashPass(pass)) { err.textContent = 'Incorrect password.'; return; }
+  // Update streak
+  users[email] = calcStreak(users[email]);
+  saveUsers(users);
+  setSession(email);
+  applySession(email);
+  toast(`Welcome back, ${users[email].name || 'friend'}! 🔥 ${users[email].streak}-day streak`);
+}
+
+function doSignup() {
+  const name  = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('signup-pass').value;
+  const err   = document.getElementById('signup-error');
+  err.textContent = '';
+  if (!name || !email || !pass) { err.textContent = 'Please fill in all fields.'; return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  const users = getUsers();
+  if (users[email]) { err.textContent = 'An account with that email already exists.'; return; }
+  users[email] = { name, passHash: hashPass(pass), streak: 1, xp: 67, lastLogin: todayStr() };
+  saveUsers(users);
+  setSession(email);
+  applySession(email);
+  toast(`Welcome to FineFocus, ${name}! 🎉 Day 1 streak started! +67 XP`);
+}
+
+function doLogout() {
+  clearSession();
+  document.getElementById('user-chip').style.display = 'none';
+  document.getElementById('streak-count').textContent = '0';
+  document.getElementById('xp-count').textContent = '0';
+  document.getElementById('auth-overlay').classList.remove('hidden');
+  // Reset form fields
+  ['login-email','login-pass'].forEach(id => document.getElementById(id).value = '');
+  ['signup-name','signup-email','signup-pass'].forEach(id => document.getElementById(id).value = '');
+  ['login-error','signup-error'].forEach(id => document.getElementById(id).textContent = '');
+  switchAuthTab('login');
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('form-login').style.display  = tab === 'login'  ? 'flex' : 'none';
+  document.getElementById('form-signup').style.display = tab === 'signup' ? 'flex' : 'none';
+  document.getElementById('tab-login').classList.toggle('active',  tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+}
+
+// On page load: check for existing session
+(function initAuth() {
+  const email = getSession();
+  if (email) {
+    const users = getUsers();
+    if (users[email]) {
+      // Update streak for new day if needed
+      users[email] = calcStreak(users[email]);
+      saveUsers(users);
+      applySession(email);
+    } else {
+      clearSession();
+    }
+  }
+})();
+
 // =================== PAGE NAVIGATION ===================
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
