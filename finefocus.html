@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FineFocus — Study Smarter</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0A0F1E;
+    --bg2: #0F1628;
+    --bg3: #141D35;
+    --surface: #1A2440;
+    --surface2: #202C4E;
+    --accent: #4FFFB0;
+    --accent2: #38E89A;
+    --accent-dim: rgba(79,255,176,0.15);
+    --accent-glow: rgba(79,255,176,0.4);
+    --text: #E8EDF8;
+    --text2: #8A9BC4;
+    --text3: #5A6A8A;
+    --red: #FF6B6B;
+    --yellow: #FFD166;
+    --blue: #6BB5FF;
+    --purple: #B06BFF;
+    --border: rgba(255,255,255,0.07);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px;
+    background: rgba(10,15,30,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.4rem;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  .nav-tabs {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border-radius: 12px; padding: 4px;
+  }
+  .nav-tab {
+    padding: 8px 18px; border-radius: 9px; border: none;
+    background: transparent; color: var(--text2);
+    font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .nav-tab.active, .nav-tab:hover {
+    background: var(--surface2); color: var(--text);
+  }
+  .nav-tab.active { color: var(--accent); }
+  .nav-right { display: flex; gap: 10px; align-items: center; }
+  .xp-badge {
+    background: var(--accent-dim); border: 1px solid var(--accent-glow);
+    color: var(--accent); border-radius: 20px;
+    padding: 6px 14px; font-size: 0.8rem; font-weight: 600;
+  }
+  .streak-badge {
+    background: rgba(255,209,102,0.15); border: 1px solid rgba(255,209,102,0.3);
+    color: var(--yellow); border-radius: 20px;
+    padding: 6px 14px; font-size: 0.8rem; font-weight: 600;
+  }
+
+  /* PAGES */
+  .page { display: none; padding-top: 80px; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* ======================== FOCUS PAGE ======================== */
+  #focus-page {
+    display: none;
+    flex-direction: column; align-items: center;
+    padding: 100px 20px 40px;
+    background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(79,255,176,0.06) 0%, transparent 70%);
+  }
+  #focus-page.active { display: flex; }
+
+  .session-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 3px;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 32px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .session-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* TIMER RING */
+  .timer-container {
+    position: relative; width: 300px; height: 300px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 40px;
+  }
+  .timer-ring-wrap {
+    position: absolute; inset: 0;
+    animation: breathe 4s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,100% { filter: drop-shadow(0 0 12px rgba(79,255,176,0.3)); }
+    50% { filter: drop-shadow(0 0 28px rgba(79,255,176,0.6)); }
+  }
+  .timer-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--surface); stroke-width: 6; }
+  .ring-progress {
+    fill: none; stroke: var(--accent); stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 847;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear;
+  }
+  .timer-inner {
+    position: absolute; text-align: center;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .timer-display {
+    font-family: 'Syne', sans-serif;
+    font-size: 4.5rem; font-weight: 700; letter-spacing: -3px;
+    color: var(--text); line-height: 1;
+  }
+  .timer-phase {
+    font-size: 0.75rem; font-weight: 500; color: var(--text2);
+    letter-spacing: 1px; text-transform: uppercase; margin-top: 6px;
+  }
+
+  /* TIMER PRESETS */
+  .preset-row {
+    display: flex; gap: 10px; margin-bottom: 28px; flex-wrap: wrap; justify-content: center;
+  }
+  .preset-btn {
+    padding: 10px 20px; border-radius: 30px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text2);
+    font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .preset-btn:hover, .preset-btn.active {
+    border-color: var(--accent); color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  /* CUSTOM TIME */
+  .custom-time-row {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 32px;
+  }
+  .time-input {
+    width: 60px; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-family: 'Syne', sans-serif;
+    font-size: 1.1rem; text-align: center; outline: none;
+  }
+  .time-input:focus { border-color: var(--accent); }
+  .time-sep { color: var(--text2); font-size: 1.2rem; }
+
+  /* CONTROLS */
+  .controls { display: flex; gap: 14px; align-items: center; margin-bottom: 36px; }
+  .btn-main {
+    width: 70px; height: 70px; border-radius: 50%; border: none;
+    background: var(--accent); color: var(--bg);
+    font-size: 1.6rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; box-shadow: 0 0 30px var(--accent-glow);
+  }
+  .btn-main:hover { transform: scale(1.07); box-shadow: 0 0 45px var(--accent-glow); }
+  .btn-secondary {
+    width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text2);
+    font-size: 1.1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* POMODORO DOTS */
+  .pomo-dots { display: flex; gap: 8px; margin-bottom: 40px; }
+  .pomo-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--surface2); transition: all 0.3s;
+  }
+  .pomo-dot.done { background: var(--accent); }
+  .pomo-dot.current { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); animation: pulse-dot 1.5s infinite; }
+
+  /* MUSIC PLAYER */
+  .music-card {
+    width: 100%; max-width: 580px;
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+  .music-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .music-title {
+    font-family: 'Syne', sans-serif; font-size: 0.8rem;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text2);
+  }
+  .vol-row { display: flex; align-items: center; gap: 8px; }
+  .vol-icon { color: var(--text2); font-size: 0.9rem; }
+  .vol-slider {
+    -webkit-appearance: none; width: 80px; height: 4px;
+    background: var(--surface2); border-radius: 2px; outline: none;
+  }
+  .vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 12px; height: 12px;
+    border-radius: 50%; background: var(--accent); cursor: pointer;
+  }
+  .music-scenes {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin-bottom: 16px;
+  }
+  .scene-btn {
+    padding: 10px 6px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg2); color: var(--text2);
+    font-size: 0.75rem; font-weight: 500; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    transition: all 0.2s;
+  }
+  .scene-btn:hover, .scene-btn.active {
+    border-color: var(--accent); color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .scene-icon { font-size: 1.3rem; }
+  .now-playing {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px; background: var(--bg2); border-radius: 10px;
+  }
+  .track-art {
+    width: 40px; height: 40px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent-dim), var(--surface2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+  }
+  .track-info { flex: 1; }
+  .track-name { font-size: 0.88rem; font-weight: 500; color: var(--text); }
+  .track-sub { font-size: 0.75rem; color: var(--text2); margin-top: 2px; }
+  .eq-bars {
+    display: flex; gap: 2px; align-items: flex-end; height: 20px;
+  }
+  .eq-bar {
+    width: 3px; background: var(--accent); border-radius: 2px;
+    animation: eq 0.8s ease-in-out infinite;
+  }
+  .eq-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .eq-bar:nth-child(2) { height: 14px; animation-delay: 0.15s; }
+  .eq-bar:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+  .eq-bar:nth-child(4) { height: 18px; animation-delay: 0.1s; }
+  .eq-bar:nth-child(5) { height: 6px; animation-delay: 0.25s; }
+  .eq-bars.paused .eq-bar { animation-play-state: paused; }
+  @keyframes eq {
+    0%,100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.3); }
+  }
+
+  /* ======================== TASKS PAGE ======================== */
+  #tasks-page { padding: 100px 20px 40px; }
+  .page-inner { max-width: 720px; margin: 0 auto; }
+  .page-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem; font-weight: 800; color: var(--text);
+    margin-bottom: 6px;
+  }
+  .page-sub { color: var(--text2); font-size: 0.9rem; margin-bottom: 28px; }
+
+  .task-input-row {
+    display: flex; gap: 10px; margin-bottom: 24px;
+  }
+  .task-input {
+    flex: 1; padding: 14px 18px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .task-input::placeholder { color: var(--text3); }
+  .task-input:focus { border-color: var(--accent); }
+  .btn-add {
+    padding: 14px 24px; border-radius: var(--radius-sm);
+    background: var(--accent); color: var(--bg); border: none;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-add:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
+
+  .task-filters { display: flex; gap: 8px; margin-bottom: 20px; }
+  .filter-btn {
+    padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--text2);
+    font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
+  }
+
+  .task-list { display: flex; flex-direction: column; gap: 10px; }
+  .task-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 18px; border-radius: var(--radius-sm);
+    background: var(--surface); border: 1px solid var(--border);
+    transition: all 0.2s; cursor: pointer;
+  }
+  .task-item:hover { border-color: rgba(79,255,176,0.2); background: var(--surface2); }
+  .task-check {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 2px solid var(--border);
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s;
+  }
+  .task-check:hover { border-color: var(--accent); }
+  .task-check.done { background: var(--accent); border-color: var(--accent); }
+  .task-check.done::after { content: '✓'; color: var(--bg); font-size: 0.75rem; font-weight: 700; }
+  .task-text { flex: 1; font-size: 0.95rem; color: var(--text); }
+  .task-text.done { color: var(--text3); text-decoration: line-through; }
+  .task-tag {
+    padding: 4px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+  }
+  .tag-math { background: rgba(107,181,255,0.15); color: var(--blue); }
+  .tag-science { background: rgba(79,255,176,0.1); color: var(--accent); }
+  .tag-english { background: rgba(176,107,255,0.15); color: var(--purple); }
+  .tag-history { background: rgba(255,209,102,0.15); color: var(--yellow); }
+  .task-del {
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; font-size: 1rem; opacity: 0;
+    transition: all 0.2s; padding: 4px;
+  }
+  .task-item:hover .task-del { opacity: 1; }
+  .task-del:hover { color: var(--red); }
+
+  /* ======================== STATS PAGE ======================== */
+  #stats-page { padding: 100px 20px 40px; }
+
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px;
+  }
+  .stat-icon { font-size: 1.5rem; margin-bottom: 10px; }
+  .stat-val {
+    font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800;
+    color: var(--text); line-height: 1;
+  }
+  .stat-val.green { color: var(--accent); }
+  .stat-val.yellow { color: var(--yellow); }
+  .stat-label { font-size: 0.8rem; color: var(--text2); margin-top: 6px; }
+
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 20px;
+  }
+  .chart-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem;
+    color: var(--text); margin-bottom: 20px;
+  }
+  .bar-chart { display: flex; gap: 10px; align-items: flex-end; height: 120px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar-fill {
+    width: 100%; border-radius: 4px 4px 0 0;
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent2) 100%);
+    transition: height 0.8s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+  }
+  .bar-fill.muted {
+    background: var(--surface2);
+  }
+  .bar-day { font-size: 0.72rem; color: var(--text3); }
+
+  .heatmap-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .heat-cell {
+    width: 18px; height: 18px; border-radius: 3px;
+    background: var(--surface2);
+    transition: background 0.3s;
+  }
+  .heat-cell.l1 { background: rgba(79,255,176,0.25); }
+  .heat-cell.l2 { background: rgba(79,255,176,0.5); }
+  .heat-cell.l3 { background: rgba(79,255,176,0.75); }
+  .heat-cell.l4 { background: var(--accent); }
+
+  /* ACHIEVEMENTS */
+  .badges-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px; margin-top: 8px;
+  }
+  .badge-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 16px 12px;
+    text-align: center; transition: all 0.2s;
+  }
+  .badge-card.earned {
+    border-color: var(--accent-glow);
+    background: linear-gradient(135deg, var(--accent-dim) 0%, var(--surface) 100%);
+  }
+  .badge-card:not(.earned) { opacity: 0.4; filter: grayscale(1); }
+  .badge-icon { font-size: 2rem; margin-bottom: 8px; }
+  .badge-name { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+  .badge-desc { font-size: 0.7rem; color: var(--text2); margin-top: 3px; }
+
+  /* ======================== NOTES PAGE ======================== */
+  #notes-page { padding: 100px 20px 40px; }
+  .notes-layout { display: grid; grid-template-columns: 240px 1fr; gap: 20px; max-width: 900px; margin: 0 auto; }
+  @media(max-width:640px){ .notes-layout { grid-template-columns: 1fr; } }
+
+  .notes-sidebar {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; height: fit-content;
+  }
+  .sidebar-label {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text2); margin-bottom: 12px;
+  }
+  .note-item {
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 4px;
+  }
+  .note-item:hover, .note-item.active {
+    background: var(--accent-dim); color: var(--accent);
+  }
+  .note-item-title { font-size: 0.88rem; font-weight: 500; color: var(--text); }
+  .note-item.active .note-item-title { color: var(--accent); }
+  .note-item-date { font-size: 0.72rem; color: var(--text3); margin-top: 2px; }
+  .new-note-btn {
+    width: 100%; padding: 10px; border-radius: 8px;
+    border: 1px dashed var(--border); background: transparent;
+    color: var(--text3); font-size: 0.85rem; cursor: pointer;
+    transition: all 0.2s; margin-top: 8px;
+  }
+  .new-note-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .note-editor {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column;
+  }
+  .editor-toolbar {
+    display: flex; gap: 4px; padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .tool-btn {
+    padding: 6px 10px; border-radius: 6px; border: none;
+    background: transparent; color: var(--text2);
+    font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+  }
+  .tool-btn:hover { background: var(--surface2); color: var(--text); }
+  .note-title-input {
+    width: 100%; padding: 20px 20px 8px;
+    background: transparent; border: none; outline: none;
+    font-family: 'Syne', sans-serif; font-size: 1.4rem;
+    font-weight: 700; color: var(--text);
+  }
+  .note-body {
+    flex: 1; width: 100%; min-height: 300px;
+    padding: 8px 20px 20px; background: transparent;
+    border: none; outline: none; resize: none;
+    font-family: 'Inter', sans-serif; font-size: 0.95rem;
+    color: var(--text2); line-height: 1.7;
+  }
+  .note-body::placeholder { color: var(--text3); }
+
+  /* ======================== SETTINGS PAGE ======================== */
+  #settings-page { padding: 100px 20px 40px; }
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 720px; margin: 0 auto; }
+  @media(max-width:600px){ .settings-grid { grid-template-columns: 1fr; } }
+  .setting-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px;
+  }
+  .setting-card-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem;
+    color: var(--text); margin-bottom: 16px;
+  }
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .setting-row:last-child { margin-bottom: 0; }
+  .setting-name { font-size: 0.88rem; color: var(--text2); }
+  /* TOGGLE */
+  .toggle { position: relative; width: 42px; height: 24px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0; border-radius: 12px;
+    background: var(--surface2); cursor: pointer; transition: 0.3s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--text3); top: 3px; left: 3px; transition: 0.3s;
+  }
+  .toggle input:checked + .toggle-slider { background: var(--accent-dim); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--accent); }
+
+  /* NOTIFICATION */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px; z-index: 999;
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px 20px; border-radius: 12px;
+    font-size: 0.9rem; color: var(--text);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* FLASHCARD WIDGET (in notes page) */
+  .flash-toggle {
+    display: flex; align-items: center; gap: 8px; margin-top: 16px;
+    padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .flash-toggle span { font-size: 0.82rem; color: var(--text2); }
+
+  /* RESPONSIVE */
+  @media(max-width:600px){
+    .timer-display { font-size: 3.2rem; }
+    .timer-container { width: 240px; height: 240px; }
+    .music-scenes { grid-template-columns: repeat(4,1fr); }
+    nav { padding: 14px 16px; }
+    .nav-tabs { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Fine<span>Focus</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('focus')">⏱ Focus</button>
+    <button class="nav-tab" onclick="showPage('tasks')">✅ Tasks</button>
+    <button class="nav-tab" onclick="showPage('notes')">📝 Notes</button>
+    <button class="nav-tab" onclick="showPage('stats')">📊 Stats</button>
+    <button class="nav-tab" onclick="showPage('settings')">⚙️ Settings</button>
+  </div>
+  <div class="nav-right">
+    <div class="streak-badge">🔥 <span id="streak-count">5</span> day streak</div>
+    <div class="xp-badge">⚡ <span id="xp-count">1240</span> XP</div>
+  </div>
+</nav>
+
+<!-- ======================== FOCUS PAGE ======================== -->
+<div id="focus-page" class="page active">
+  <div class="session-label">
+    <div class="session-dot" id="session-dot"></div>
+    <span id="session-status">Ready to Focus</span>
+  </div>
+
+  <div class="timer-container">
+    <div class="timer-ring-wrap">
+      <svg class="timer-svg" viewBox="0 0 300 300">
+        <circle class="ring-bg" cx="150" cy="150" r="135"/>
+        <circle class="ring-progress" id="ring" cx="150" cy="150" r="135"/>
+      </svg>
+    </div>
+    <div class="timer-inner">
+      <div class="timer-display" id="timer-display">25:00</div>
+      <div class="timer-phase" id="timer-phase">Focus Session</div>
+    </div>
+  </div>
+
+  <div class="preset-row">
+    <button class="preset-btn active" onclick="setPreset(25,5,this)">Pomodoro</button>
+    <button class="preset-btn" onclick="setPreset(50,10,this)">Deep Work</button>
+    <button class="preset-btn" onclick="setPreset(90,20,this)">Flow State</button>
+    <button class="preset-btn" onclick="setPreset(15,3,this)">Quick Sprint</button>
+    <button class="preset-btn" onclick="openCustom(this)">Custom</button>
+  </div>
+
+  <div class="custom-time-row" id="custom-row" style="display:none">
+    <input class="time-input" id="custom-min" type="number" min="1" max="180" value="25" placeholder="25"/>
+    <span class="time-sep">:</span>
+    <input class="time-input" id="custom-sec" type="number" min="0" max="59" value="0" placeholder="00"/>
+    <button class="btn-add" onclick="applyCustom()">Set</button>
+  </div>
+
+  <div class="pomo-dots" id="pomo-dots">
+    <div class="pomo-dot current"></div>
+    <div class="pomo-dot"></div>
+    <div class="pomo-dot"></div>
+    <div class="pomo-dot"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-secondary" onclick="resetTimer()" title="Reset">↺</button>
+    <button class="btn-main" id="play-btn" onclick="toggleTimer()">▶</button>
+    <button class="btn-secondary" onclick="skipPhase()" title="Skip">⏭</button>
+  </div>
+
+  <div class="music-card">
+    <div class="music-header">
+      <div class="music-title">🎵 Ambient Sounds</div>
+      <div class="vol-row">
+        <span class="vol-icon">🔈</span>
+        <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.01" value="0.5" oninput="setVolume(this.value)"/>
+        <span class="vol-icon">🔊</span>
+      </div>
+    </div>
+    <div class="music-scenes">
+      <button class="scene-btn" onclick="playScene('rain', this)">
+        <span class="scene-icon">🌧️</span>Rain
+      </button>
+      <button class="scene-btn" onclick="playScene('forest', this)">
+        <span class="scene-icon">🌲</span>Forest
+      </button>
+      <button class="scene-btn" onclick="playScene('cafe', this)">
+        <span class="scene-icon">☕</span>Café
+      </button>
+      <button class="scene-btn" onclick="playScene('ocean', this)">
+        <span class="scene-icon">🌊</span>Ocean
+      </button>
+      <button class="scene-btn" onclick="playScene('fire', this)">
+        <span class="scene-icon">🔥</span>Fire
+      </button>
+      <button class="scene-btn" onclick="playScene('space', this)">
+        <span class="scene-icon">🌌</span>Space
+      </button>
+      <button class="scene-btn" onclick="playScene('city', this)">
+        <span class="scene-icon">🏙️</span>City
+      </button>
+      <button class="scene-btn" onclick="playScene('lo-fi', this)">
+        <span class="scene-icon">🎹</span>Lo-Fi
+      </button>
+    </div>
+    <div class="now-playing" id="now-playing" style="display:none">
+      <div class="track-art" id="track-art">🎵</div>
+      <div class="track-info">
+        <div class="track-name" id="track-name">—</div>
+        <div class="track-sub" id="track-sub">Now playing</div>
+      </div>
+      <div class="eq-bars" id="eq-bars">
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== TASKS PAGE ======================== -->
+<div id="tasks-page" class="page">
+  <div class="page-inner">
+    <div class="page-heading">My Tasks</div>
+    <div class="page-sub">Break your study session into actionable steps.</div>
+
+    <div class="task-input-row">
+      <input class="task-input" id="task-input" placeholder="Add a task (e.g. Chapter 5 summary)..." onkeydown="if(event.key==='Enter')addTask()"/>
+      <select class="task-input" id="task-tag-sel" style="max-width:130px">
+        <option value="math">📐 Math</option>
+        <option value="science">🔬 Science</option>
+        <option value="english">📖 English</option>
+        <option value="history">📜 History</option>
+      </select>
+      <button class="btn-add" onclick="addTask()">+ Add</button>
+    </div>
+
+    <div class="task-filters">
+      <button class="filter-btn active" onclick="filterTasks('all',this)">All</button>
+      <button class="filter-btn" onclick="filterTasks('active',this)">Active</button>
+      <button class="filter-btn" onclick="filterTasks('done',this)">Done</button>
+    </div>
+
+    <div class="task-list" id="task-list"></div>
+  </div>
+</div>
+
+<!-- ======================== NOTES PAGE ======================== -->
+<div id="notes-page" class="page">
+  <div class="notes-layout">
+    <div class="notes-sidebar">
+      <div class="sidebar-label">My Notes</div>
+      <div id="note-list"></div>
+      <button class="new-note-btn" onclick="newNote()">+ New Note</button>
+    </div>
+    <div class="note-editor">
+      <div class="editor-toolbar">
+        <button class="tool-btn" onclick="formatText('bold')"><b>B</b></button>
+        <button class="tool-btn" onclick="formatText('italic')"><i>I</i></button>
+        <button class="tool-btn" onclick="formatText('underline')"><u>U</u></button>
+        <button class="tool-btn" style="color:var(--text3)">|</button>
+        <button class="tool-btn" onclick="insertBullet()">• List</button>
+        <button class="tool-btn" onclick="insertDivider()">— Divider</button>
+        <button class="tool-btn" style="margin-left:auto; color:var(--accent)" onclick="saveNote()">💾 Save</button>
+      </div>
+      <input class="note-title-input" id="note-title" placeholder="Note title..." />
+      <textarea class="note-body" id="note-body" placeholder="Start writing your notes here...&#10;&#10;Tip: Use bullet points, headings, and formulas to organise your thoughts."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== STATS PAGE ======================== -->
+<div id="stats-page" class="page">
+  <div class="page-inner">
+    <div class="page-heading">Your Progress</div>
+    <div class="page-sub">Track how your study habits are building up.</div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">⏱</div>
+        <div class="stat-val green" id="stat-hours">47</div>
+        <div class="stat-label">Hours focused this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🍅</div>
+        <div class="stat-val" id="stat-pomos">192</div>
+        <div class="stat-label">Pomodoros completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-val">84</div>
+        <div class="stat-label">Tasks completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-val yellow">5</div>
+        <div class="stat-label">Day streak</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Focus Hours — This Week</div>
+      <div class="bar-chart" id="bar-chart"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Activity Heatmap — Last 70 Days</div>
+      <div class="heatmap-row" id="heatmap"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">🏆 Achievements</div>
+      <div class="badges-grid" id="badges-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== SETTINGS PAGE ======================== -->
+<div id="settings-page" class="page">
+  <div class="page-inner" style="max-width:720px;margin:0 auto">
+    <div class="page-heading">Settings</div>
+    <div class="page-sub">Customise FineFocus to suit your study style.</div>
+    <div class="settings-grid">
+      <div class="setting-card">
+        <div class="setting-card-title">🍅 Timer</div>
+        <div class="setting-row">
+          <span class="setting-name">Auto-start breaks</span>
+          <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-name">Auto-start focus</span>
+          <label class="toggle"><input type="checkbox"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-name">Long break interval</span>
+          <select class="task-input" style="width:80px;padding:6px 8px;font-size:0.82rem">
+            <option>4</option><option>3</option><option>5</option>
+          </select>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="setting-card-title">🔔 Notifications</div>
+        <div class="setting-row">
+          <span class="setting-name">Browser notifications</span>
+          <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-name">Sound alerts</span>
+          <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-name">Session summary</span>
+          <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="setting-card-title">🎨 Appearance</div>
+        <div class="setting-row">
+          <span class="setting-name">Dark mode</span>
+          <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-name">Reduced motion</span>
+          <label class="toggle"><input type="checkbox"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-name">Compact layout</span>
+          <label class="toggle"><input type="checkbox"/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="setting-card-title">📊 Goals</div>
+        <div class="setting-row">
+          <span class="setting-name">Daily focus goal (hrs)</span>
+          <input type="number" class="time-input" value="4" style="width:60px"/>
+        </div>
+        <div class="setting-row">
+          <span class="setting-name">Weekly task goal</span>
+          <input type="number" class="time-input" value="20" style="width:60px"/>
+        </div>
+        <div class="setting-row">
+          <span class="setting-name">Streak reminder</span>
+          <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =================== PAGE NAVIGATION ===================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(name+'-page').classList.add('active');
+  event.target.classList.add('active');
+}
+
+// =================== TOAST ===================
+function toast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// =================== TIMER ===================
+let totalSecs = 25*60, remainSecs = 25*60;
+let timerRunning = false, timerInterval = null;
+let isBreak = false, pomoDone = 0;
+let focusMins = 25, breakMins = 5;
+const CIRCUMFERENCE = 2 * Math.PI * 135;
+
+function updateDisplay() {
+  const m = Math.floor(remainSecs/60).toString().padStart(2,'0');
+  const s = (remainSecs%60).toString().padStart(2,'0');
+  document.getElementById('timer-display').textContent = `${m}:${s}`;
+  const progress = remainSecs / totalSecs;
+  document.getElementById('ring').style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+}
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval); timerRunning = false;
+    document.getElementById('play-btn').textContent = '▶';
+    document.getElementById('session-status').textContent = 'Paused';
+    document.getElementById('eq-bars').classList.add('paused');
+  } else {
+    timerRunning = true;
+    document.getElementById('play-btn').textContent = '⏸';
+    document.getElementById('session-status').textContent = isBreak ? 'On Break' : 'In Focus';
+    document.getElementById('eq-bars').classList.remove('paused');
+    timerInterval = setInterval(() => {
+      remainSecs--;
+      if (remainSecs <= 0) {
+        clearInterval(timerInterval); timerRunning = false;
+        phaseComplete();
+      }
+      updateDisplay();
+    }, 1000);
+  }
+}
+
+function phaseComplete() {
+  if (!isBreak) {
+    pomoDone++;
+    document.getElementById('stat-pomos').textContent = parseInt(document.getElementById('stat-pomos').textContent)+1;
+    document.getElementById('xp-count').textContent = parseInt(document.getElementById('xp-count').textContent)+25;
+    updatePomoDots();
+    toast('🍅 Pomodoro complete! +25 XP');
+    isBreak = true;
+    totalSecs = breakMins*60; remainSecs = totalSecs;
+    document.getElementById('timer-phase').textContent = 'Break Time';
+  } else {
+    isBreak = false;
+    totalSecs = focusMins*60; remainSecs = totalSecs;
+    document.getElementById('timer-phase').textContent = 'Focus Session';
+    toast('Break over. Ready to focus! 💪');
+  }
+  document.getElementById('play-btn').textContent = '▶';
+  document.getElementById('session-status').textContent = 'Ready';
+  updateDisplay();
+}
+
+function resetTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  isBreak = false;
+  totalSecs = focusMins*60; remainSecs = totalSecs;
+  document.getElementById('play-btn').textContent = '▶';
+  document.getElementById('timer-phase').textContent = 'Focus Session';
+  document.getElementById('session-status').textContent = 'Ready to Focus';
+  updateDisplay();
+}
+
+function skipPhase() { clearInterval(timerInterval); timerRunning = false; remainSecs = 0; phaseComplete(); }
+
+function setPreset(focus, brk, el) {
+  focusMins = focus; breakMins = brk;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('custom-row').style.display = 'none';
+  resetTimer();
+  toast(`Set to ${focus}/${brk} min`);
+}
+
+function openCustom(el) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('custom-row').style.display = 'flex';
+}
+
+function applyCustom() {
+  focusMins = parseInt(document.getElementById('custom-min').value)||25;
+  breakMins = 5;
+  resetTimer();
+  toast(`Custom timer: ${focusMins} min`);
+}
+
+function updatePomoDots() {
+  const dots = document.querySelectorAll('.pomo-dot');
+  const idx = pomoDone % 4;
+  dots.forEach((d,i) => {
+    d.classList.remove('done','current');
+    if (i < idx) d.classList.add('done');
+    else if (i === idx) d.classList.add('current');
+  });
+}
+
+updateDisplay();
+
+// =================== MUSIC ===================
+const sceneData = {
+  rain: { name: 'Gentle Rain', icon: '🌧️', sub: 'Soft rainfall on leaves' },
+  forest: { name: 'Forest Ambience', icon: '🌲', sub: 'Birds & rustling trees' },
+  cafe: { name: 'Coffee Shop', icon: '☕', sub: 'Warm café chatter' },
+  ocean: { name: 'Ocean Waves', icon: '🌊', sub: 'Rhythmic tide sounds' },
+  fire: { name: 'Crackling Fire', icon: '🔥', sub: 'Cosy fireplace' },
+  space: { name: 'Deep Space', icon: '🌌', sub: 'Cosmic drone tones' },
+  city: { name: 'City Night', icon: '🏙️', sub: 'Urban nightscape' },
+  'lo-fi': { name: 'Lo-Fi Beats', icon: '🎹', sub: 'Chill study music' },
+};
+
+let currentScene = null;
+// Web Audio API for generated ambient sound
+let audioCtx = null, gainNode = null, oscillators = [];
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = parseFloat(document.getElementById('vol-slider').value);
+    gainNode.connect(audioCtx.destination);
+  }
+  return audioCtx;
+}
+
+function stopAllOscillators() {
+  oscillators.forEach(o => { try { o.stop(); } catch(e){} });
+  oscillators = [];
+}
+
+function playScene(scene, el) {
+  document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('active'));
+  if (currentScene === scene) {
+    stopAllOscillators(); currentScene = null;
+    document.getElementById('now-playing').style.display = 'none';
+    document.getElementById('eq-bars').classList.add('paused');
+    return;
+  }
+  el.classList.add('active'); currentScene = scene;
+  const info = sceneData[scene];
+  document.getElementById('track-art').textContent = info.icon;
+  document.getElementById('track-name').textContent = info.name;
+  document.getElementById('track-sub').textContent = info.sub;
+  document.getElementById('now-playing').style.display = 'flex';
+  document.getElementById('eq-bars').classList.remove('paused');
+  generateAmbient(scene);
+  toast(`Now playing: ${info.name}`);
+}
+
+function generateAmbient(scene) {
+  stopAllOscillators();
+  const ctx = getAudioCtx();
+  const freqs = {
+    rain: [200,800,1200,3000], forest: [350,700,1100,1800],
+    cafe: [300,600,900,1500], ocean: [100,200,400,800],
+    fire: [150,300,600,1200], space: [55,110,220,330],
+    city: [400,800,1600,3200], 'lo-fi': [220,440,660,880]
+  };
+  const types = {
+    rain:'highpass', forest:'bandpass', cafe:'lowpass',
+    ocean:'lowpass', fire:'bandpass', space:'lowpass',
+    city:'highpass', 'lo-fi':'lowpass'
+  };
+  (freqs[scene]||[200,400]).forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const filt = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    osc.type = ['sine','sine','triangle','sawtooth'][i%4];
+    osc.frequency.value = freq + Math.random()*20;
+    filt.type = types[scene]||'lowpass';
+    filt.frequency.value = freq*1.5;
+    g.gain.value = 0.04 + Math.random()*0.03;
+    // LFO for subtle movement
+    const lfo = ctx.createOscillator();
+    const lfoG = ctx.createGain();
+    lfo.frequency.value = 0.1 + Math.random()*0.3;
+    lfoG.gain.value = freq * 0.05;
+    lfo.connect(lfoG); lfoG.connect(osc.frequency);
+    osc.connect(filt); filt.connect(g); g.connect(gainNode);
+    osc.start(); lfo.start();
+    oscillators.push(osc, lfo);
+  });
+}
+
+function setVolume(v) { if (gainNode) gainNode.gain.value = parseFloat(v); }
+
+// =================== TASKS ===================
+let tasks = [
+  {id:1, text:'Read Chapter 7 — Organic Chemistry', tag:'science', done:false},
+  {id:2, text:'Complete practice paper — Algebra', tag:'math', done:false},
+  {id:3, text:'Write essay outline — World War II', tag:'history', done:true},
+];
+let taskFilter = 'all';
+
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  list.innerHTML = '';
+  const show = tasks.filter(t => taskFilter==='all' ? true : taskFilter==='done' ? t.done : !t.done);
+  if (!show.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text3);padding:32px;font-size:0.9rem">No tasks here yet — add one above!</div>';
+    return;
+  }
+  show.forEach(task => {
+    const div = document.createElement('div');
+    div.className = 'task-item';
+    div.innerHTML = `
+      <div class="task-check ${task.done?'done':''}" onclick="toggleTask(${task.id})"></div>
+      <div class="task-text ${task.done?'done':''}">${task.text}</div>
+      <div class="task-tag tag-${task.tag}">${task.tag}</div>
+      <button class="task-del" onclick="delTask(${task.id})">✕</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function addTask() {
+  const inp = document.getElementById('task-input');
+  const tag = document.getElementById('task-tag-sel').value;
+  if (!inp.value.trim()) return;
+  tasks.unshift({id: Date.now(), text: inp.value.trim(), tag, done: false});
+  inp.value = ''; renderTasks();
+  toast('Task added ✅');
+}
+
+function toggleTask(id) {
+  const t = tasks.find(t=>t.id===id);
+  if (t) { t.done = !t.done; renderTasks(); if(t.done) toast('Task complete! +10 XP'); }
+}
+function delTask(id) { tasks = tasks.filter(t=>t.id!==id); renderTasks(); }
+function filterTasks(f, el) {
+  taskFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); renderTasks();
+}
+renderTasks();
+
+// =================== NOTES ===================
+let notes = [
+  {id:1, title:'Photosynthesis Notes', body:'Light-dependent reactions occur in the thylakoid membrane.\n\nKey equation:\n6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂\n\nSteps:\n• Photolysis of water\n• ATP synthesis via ATP synthase\n• NADPH production', date:'Jun 12'},
+  {id:2, title:'Quadratic Formula', body:'x = (−b ± √(b²−4ac)) / 2a\n\nUse when factoring is not straightforward.\n\nDiscriminant: b²−4ac\n• > 0 → two real roots\n• = 0 → one real root\n• < 0 → no real roots', date:'Jun 11'},
+];
+let activeNote = notes[0].id;
+
+function renderNoteList() {
+  const list = document.getElementById('note-list');
+  list.innerHTML = '';
+  notes.forEach(n => {
+    const div = document.createElement('div');
+    div.className = `note-item ${n.id===activeNote?'active':''}`;
+    div.innerHTML = `<div class="note-item-title">${n.title||'Untitled'}</div><div class="note-item-date">${n.date}</div>`;
+    div.onclick = () => { activeNote=n.id; loadNote(n); renderNoteList(); };
+    list.appendChild(div);
+  });
+}
+
+function loadNote(n) {
+  document.getElementById('note-title').value = n.title;
+  document.getElementById('note-body').value = n.body;
+}
+
+function saveNote() {
+  const n = notes.find(n=>n.id===activeNote);
+  if (n) {
+    n.title = document.getElementById('note-title').value || 'Untitled';
+    n.body = document.getElementById('note-body').value;
+    n.date = 'Jun 14';
+    renderNoteList(); toast('Note saved 💾');
+  }
+}
+
+function newNote() {
+  const n = {id: Date.now(), title:'', body:'', date:'Jun 14'};
+  notes.unshift(n); activeNote = n.id;
+  renderNoteList(); loadNote(n);
+  document.getElementById('note-title').focus();
+}
+
+function formatText(cmd) { document.execCommand(cmd); }
+function insertBullet() {
+  const ta = document.getElementById('note-body');
+  const pos = ta.selectionStart;
+  ta.value = ta.value.slice(0,pos) + '\n• ' + ta.value.slice(pos);
+  ta.selectionStart = ta.selectionEnd = pos + 3;
+  ta.focus();
+}
+function insertDivider() {
+  const ta = document.getElementById('note-body');
+  const pos = ta.selectionStart;
+  ta.value = ta.value.slice(0,pos) + '\n─────────────────────\n' + ta.value.slice(pos);
+  ta.focus();
+}
+
+renderNoteList();
+loadNote(notes[0]);
+
+// =================== STATS — BAR CHART ===================
+const weekData = [
+  {day:'Mon', hrs:3.5, muted:false},
+  {day:'Tue', hrs:5, muted:false},
+  {day:'Wed', hrs:2, muted:false},
+  {day:'Thu', hrs:6, muted:false},
+  {day:'Fri', hrs:4.5, muted:false},
+  {day:'Sat', hrs:1.5, muted:false},
+  {day:'Sun', hrs:0, muted:true},
+];
+const maxHrs = Math.max(...weekData.map(d=>d.hrs), 1);
+const chart = document.getElementById('bar-chart');
+weekData.forEach(d => {
+  const col = document.createElement('div');
+  col.className = 'bar-col';
+  const fillH = d.hrs === 0 ? 4 : Math.round((d.hrs/maxHrs)*100);
+  col.innerHTML = `
+    <div style="font-size:0.75rem;color:var(--text2);margin-bottom:4px">${d.hrs||''}h</div>
+    <div class="bar-fill ${d.muted?'muted':''}" style="height:${fillH}%"></div>
+    <div class="bar-day">${d.day}</div>
+  `;
+  chart.appendChild(col);
+});
+
+// HEATMAP
+const hmap = document.getElementById('heatmap');
+const levels = [0,0,1,0,2,1,0,3,2,1,4,2,0,1,3,2,1,0,2,4,3,1,0,2,1,2,3,4,1,0,2,1,3,4,2,1,0,3,2,1,4,2,3,1,0,2,1,3,2,4,1,2,0,1,3,2,4,1,2,0,1,3,2,1,4,0,2,3,1,2];
+levels.forEach(l => {
+  const cell = document.createElement('div');
+  cell.className = `heat-cell${l?` l${l}`:''}`;
+  hmap.appendChild(cell);
+});
+
+// BADGES
+const badges = [
+  {icon:'🍅', name:'First Pomodoro', desc:'Complete your 1st session', earned:true},
+  {icon:'🔥', name:'On Fire', desc:'5-day streak', earned:true},
+  {icon:'⚡', name:'Speed Demon', desc:'10 tasks in one day', earned:true},
+  {icon:'📚', name:'Bookworm', desc:'10 hours in a week', earned:true},
+  {icon:'🌙', name:'Night Owl', desc:'Study after midnight', earned:false},
+  {icon:'🏆', name:'Champion', desc:'100 pomodoros', earned:false},
+  {icon:'🎯', name:'Sharpshooter', desc:'30-day streak', earned:false},
+  {icon:'💎', name:'Diamond Mind', desc:'200 hours total', earned:false},
+];
+const bg = document.getElementById('badges-grid');
+badges.forEach(b => {
+  bg.innerHTML += `
+    <div class="badge-card ${b.earned?'earned':''}">
+      <div class="badge-icon">${b.icon}</div>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+    </div>
+  `;
+});
+</script>
+</body>
+</html>
